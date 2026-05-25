@@ -65,6 +65,7 @@ export default function Billing() {
   const [seatZone, setSeatZone] = useState("A");
   const [selectedSeat, setSelectedSeat] = useState(null);
   const [assigning, setAssigning] = useState(false);
+  const [pageToast, setPageToast] = useState(""); // page-level transient error
 
   // ── load payments ──
   const load = useCallback(() => {
@@ -157,7 +158,7 @@ export default function Billing() {
       setModal(false);
       load();
     } catch (err) {
-      alert(err.response?.data?.message || "Seat assignment failed");
+      setFormErr(err.response?.data?.message || "Seat assignment failed");
     } finally {
       setAssigning(false);
     }
@@ -180,7 +181,8 @@ export default function Billing() {
       a.click();
       URL.revokeObjectURL(url);
     } catch {
-      alert("Failed to download PDF");
+      setPageToast("Failed to download PDF. Please try again.");
+      setTimeout(() => setPageToast(""), 4000);
     }
   };
 
@@ -200,6 +202,40 @@ export default function Billing() {
           </button>
         </div>
       </div>
+
+      {/* Page-level transient error (e.g. PDF download) */}
+      {pageToast && (
+        <div
+          style={{
+            padding: "10px 16px",
+            marginBottom: 16,
+            borderRadius: 8,
+            background: "rgba(192,57,43,0.08)",
+            border: "1px solid rgba(192,57,43,0.25)",
+            color: "#C0392B",
+            fontSize: "0.82rem",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+          }}
+        >
+          <span>{pageToast}</span>
+          <button
+            onClick={() => setPageToast("")}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              color: "#C0392B",
+              fontWeight: 700,
+              fontSize: "1rem",
+            }}
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       {/* Summary stats */}
       {summary && (
