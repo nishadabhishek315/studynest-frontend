@@ -23,11 +23,11 @@ export default function Sidebar({ isOpen, onClose }) {
 
   useEffect(() => {
     getNotifications({ isRead: 'false' })
-      .then(r => setUnread(r.data.unread || 0))
+      .then((r) => setUnread(r.data.unread || 0))
       .catch(() => {});
     const interval = setInterval(() => {
       getNotifications({ isRead: 'false' })
-        .then(r => setUnread(r.data.unread || 0))
+        .then((r) => setUnread(r.data.unread || 0))
         .catch(() => {});
     }, 60000);
     return () => clearInterval(interval);
@@ -177,19 +177,21 @@ export default function Sidebar({ isOpen, onClose }) {
               {item.icon}
             </span>
             {item.label}
-            {item.to === '/notifications' && unread > 0 && (
-              <span style={{
-                marginLeft: 'auto',
-                background: '#C0392B',
-                color: '#fff',
-                fontSize: '0.6rem',
-                fontWeight: 700,
-                borderRadius: 10,
-                padding: '1px 6px',
-                minWidth: 16,
-                textAlign: 'center',
-              }}>
-                {unread > 99 ? '99+' : unread}
+            {item.to === "/notifications" && unread > 0 && (
+              <span
+                style={{
+                  marginLeft: "auto",
+                  background: "#C0392B",
+                  color: "#fff",
+                  fontSize: "0.6rem",
+                  fontWeight: 700,
+                  borderRadius: 10,
+                  padding: "1px 6px",
+                  minWidth: 16,
+                  textAlign: "center",
+                }}
+              >
+                {unread > 99 ? "99+" : unread}
               </span>
             )}
           </NavLink>
