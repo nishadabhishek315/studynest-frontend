@@ -64,6 +64,7 @@ export default function Billing() {
   const [availSeats, setAvailSeats] = useState([]);
   const [seatZone, setSeatZone] = useState("A");
   const [selectedSeat, setSelectedSeat] = useState(null);
+  const [selectedShift, setSelectedShift] = useState("full_day");
   const [assigning, setAssigning] = useState(false);
   const [pageToast, setPageToast] = useState(""); // page-level transient error
 
@@ -115,6 +116,20 @@ export default function Billing() {
     }));
   };
 
+  // Returns available shifts for a given seat
+  const availableShifts = (seat) => {
+    if (!seat || seat.status === "maintenance" || seat.status === "reserved") {
+      return [];
+    }
+    const morningFree = !seat.slots?.morning?.occupiedBy;
+    const eveningFree = !seat.slots?.evening?.occupiedBy;
+    const options = [];
+    if (morningFree) options.push("morning");
+    if (eveningFree) options.push("evening");
+    if (morningFree && eveningFree) options.push("full_day");
+    return options;
+  };
+
   // ── Step 1: Record payment ──
   const handleCreatePayment = async (e) => {
     e.preventDefault();
@@ -140,6 +155,7 @@ export default function Billing() {
       setAvailSeats(seatsRes.data.seats);
       setSeatZone("A");
       setSelectedSeat(null);
+      setSelectedShift("full_day");
       setStep(2);
       load(); // refresh payment list in background
     } catch (err) {
@@ -154,7 +170,7 @@ export default function Billing() {
     if (!selectedSeat) return;
     setAssigning(true);
     try {
-      await assignSeat(selectedSeat._id, paidMember._id);
+      await assignSeat(selectedSeat._id, paidMember._id, selectedShift);
       setModal(false);
       load();
     } catch (err) {
@@ -603,7 +619,14 @@ export default function Billing() {
                   return (
                     <div
                       key={seat._id}
-                      onClick={() => setSelectedSeat(isSelected ? null : seat)}
+                      onClick={() => {
+                        setSelectedSeat(isSelected ? null : seat);
+                        if (!isSelected) {
+                          // Reset shift to default when selecting a new seat
+                          const shifts = availableShifts(seat);
+                          setSelectedShift(shifts.includes("full_day") ? "full_day" : shifts[0] || "full_day");
+                        }
+                      }}
                       title={seat.seatNumber}
                       style={{
                         aspectRatio: "1",
@@ -659,6 +682,47 @@ export default function Billing() {
               </div>
             )}
 
+            {/* Shift selector */}
+            {selectedSeat && (
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 500, marginBottom: 10, color: "#2C3E50" }}>
+                  Choose Shift:
+                </label>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {["morning", "evening", "full_day"].map((shift) => {
+                    const available = availableShifts(selectedSeat).includes(shift);
+                    const isSelected = selectedShift === shift;
+                    const shiftLabels = {
+                      morning: "🌅 Morning (7 AM – 2 PM)",
+                      evening: "🌆 Evening (2 PM – 9 PM)",
+                      full_day: "☀️ Full Day (7 AM – 9 PM)",
+                    };
+                    return (
+                      <button
+                        key={shift}
+                        onClick={() => available && setSelectedShift(shift)}
+                        disabled={!available}
+                        style={{
+                          padding: "8px 12px",
+                          borderRadius: 6,
+                          border: isSelected ? "2px solid #1A6A4A" : "1px solid rgba(201,168,76,0.3)",
+                          background: isSelected ? "rgba(26,106,74,0.12)" : available ? "transparent" : "rgba(0,0,0,0.04)",
+                          color: isSelected ? "#1A6A4A" : available ? "#2C3E50" : "#7A7A6E",
+                          fontWeight: isSelected ? 600 : 500,
+                          fontSize: "0.75rem",
+                          cursor: available ? "pointer" : "not-allowed",
+                          opacity: available ? 1 : 0.5,
+                          transition: "all 0.15s",
+                        }}
+                      >
+                        {shiftLabels[shift]}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div
               style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}
             >
@@ -672,7 +736,7 @@ export default function Billing() {
               >
                 {assigning
                   ? "Assigning…"
-                  : `Assign ${selectedSeat?.seatNumber || "Seat"}`}
+                  : `Assign ${selectedSeat?.seatNumber || "Seat"} · ${selectedShift === "full_day" ? "Full Day" : selectedShift.charAt(0).toUpperCase() + selectedShift.slice(1)}`}
               </button>
             </div>
           </div>
