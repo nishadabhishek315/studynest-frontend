@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import Modal from '../../components/ui/Modal';
 import { createMember, updateMember } from '../../api/members.api';
 import { getPlans } from '../../api/plans.api';
+import { parseError } from '../../utils/errorHandler';
 
 const EMPTY = {
   name: '', phone: '', email: '', address: '',
@@ -48,6 +49,29 @@ export default function MemberModal({ open, onClose, member, onSaved }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    // Client-side validation
+    if (!form.name?.trim()) {
+      setError('Full name is required.');
+      return;
+    }
+    if (!form.phone?.trim()) {
+      setError('Phone number is required.');
+      return;
+    }
+    if (form.idProofNumber?.trim() && !form.idProofType) {
+      setError('Please select an ID proof type when providing an ID number.');
+      return;
+    }
+    if (form.idProofType && !form.idProofNumber?.trim()) {
+      setError('Please provide an ID number when selecting an ID proof type.');
+      return;
+    }
+    if (form.email && !form.email.match(/^\S+@\S+\.\S+$/)) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+
     setLoading(true);
     try {
       const payload = { ...form };
@@ -61,7 +85,7 @@ export default function MemberModal({ open, onClose, member, onSaved }) {
       }
       onSaved();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to save member');
+      setError(parseError(err));
     } finally {
       setLoading(false);
     }
@@ -126,7 +150,19 @@ export default function MemberModal({ open, onClose, member, onSaved }) {
           <input className="form-input" value={form.notes} onChange={set('notes')} placeholder="Any special notes" />
         </div>
 
-        {error && <div style={{ color: '#C0392B', fontSize: '0.82rem', marginBottom: 12 }}>{error}</div>}
+        {error && (
+          <div style={{
+            color: '#C0392B',
+            fontSize: '0.82rem',
+            marginBottom: 12,
+            padding: '8px 10px',
+            background: 'rgba(192, 57, 43, 0.08)',
+            borderRadius: 4,
+            borderLeft: '2px solid #C0392B',
+          }}>
+            {error}
+          </div>
+        )}
 
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
           <button type="button" className="btn btn-outline" onClick={onClose}>Cancel</button>

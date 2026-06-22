@@ -4,7 +4,7 @@ import { login } from '../api/auth.api';
 import useAuthStore from '../store/authStore';
 
 export default function Login() {
-  const [form, setForm]       = useState({ email: 'admin@studynest.in', password: '' });
+  const [form, setForm]       = useState({ email: '', password: '' });
   const [error, setError]     = useState('');
   const [loading, setLoading] = useState(false);
   const { setAuth }           = useAuthStore();

@@ -11,6 +11,7 @@ import StatCard from "../../components/ui/StatCard";
 import MemberModal from "./MemberModal";
 import Loader from "../../components/ui/Loader";
 import ConfirmDialog from "../../components/ui/ConfirmDialog";
+import { parseError } from "../../utils/errorHandler";
 
 const AVATAR_COLORS = ["#1A5F6A", "#C9A84C", "#C0392B", "#2C3E50", "#1A6A4A"];
 
@@ -53,7 +54,7 @@ export default function Members() {
       await updateStatus(id, newStatus);
       load();
     } catch (err) {
-      setPageError(err.response?.data?.message || "Failed to update status");
+      setPageError(parseError(err) || "Failed to update status");
     }
   };
 
@@ -65,7 +66,7 @@ export default function Members() {
       load();
     } catch (err) {
       setDeleteTarget(null);
-      setPageError(err.response?.data?.message || "Failed to delete member");
+      setPageError(parseError(err) || "Failed to delete member");
     }
   };
 
