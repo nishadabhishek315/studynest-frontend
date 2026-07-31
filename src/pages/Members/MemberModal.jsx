@@ -10,6 +10,9 @@ const EMPTY = {
   planId: '', expiryDate: '', notes: '',
 };
 
+const ALPHABET_NAME_REGEX = /^[A-Za-z\s]+$/;
+const INDIAN_PHONE_REGEX = /^(?:91)?[6-9]\d{9}$/;
+
 export default function MemberModal({ open, onClose, member, onSaved }) {
   const [form,    setForm]    = useState(EMPTY);
   const [plans,   setPlans]   = useState([]);
@@ -55,8 +58,17 @@ export default function MemberModal({ open, onClose, member, onSaved }) {
       setError('Full name is required.');
       return;
     }
+    if (!ALPHABET_NAME_REGEX.test(form.name.trim())) {
+      setError('Name must contain alphabet letters only.');
+      return;
+    }
     if (!form.phone?.trim()) {
       setError('Phone number is required.');
+      return;
+    }
+    const normalizedPhone = form.phone.replace(/[+\-\s]/g, '');
+    if (!INDIAN_PHONE_REGEX.test(normalizedPhone)) {
+      setError('Please enter a valid Indian phone number (e.g. +91 9876543210).');
       return;
     }
     if (form.idProofNumber?.trim() && !form.idProofType) {
@@ -97,11 +109,11 @@ export default function MemberModal({ open, onClose, member, onSaved }) {
         <div className="grid-2">
           <div className="form-group">
             <label>Full Name *</label>
-            <input className="form-input" value={form.name} onChange={set('name')} placeholder="Arjun Sharma" required />
+            <input className="form-input" value={form.name} onChange={set('name')} placeholder="Arjun Sharma" pattern="[A-Za-z ]+" required />
           </div>
           <div className="form-group">
             <label>Phone *</label>
-            <input className="form-input" value={form.phone} onChange={set('phone')} placeholder="9876543210" required />
+            <input className="form-input" value={form.phone} onChange={set('phone')} placeholder="+91 9876543210" inputMode="tel" required />
           </div>
         </div>
         <div className="form-group">
