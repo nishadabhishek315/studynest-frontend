@@ -20,6 +20,7 @@ const EMPTY_FORM = {
   amount: "",
   notes: "",
   transactionRef: "",
+  expiryDate: "",
 };
 
 const STATUS_COLOR = {
@@ -109,10 +110,18 @@ export default function Billing() {
   const handlePlanChange = (e) => {
     const planId = e.target.value;
     const picked = plans.find((p) => p._id === planId);
+    // default expiry: one month from today
+    const addMonths = (d, months) => {
+      const dt = new Date(d);
+      dt.setMonth(dt.getMonth() + months);
+      return dt;
+    };
+    const toInputDate = (d) => d.toISOString().slice(0, 10);
     setForm((f) => ({
       ...f,
       planId,
       amount: picked ? String(picked.price) : f.amount,
+      expiryDate: picked ? toInputDate(addMonths(new Date(), 1)) : f.expiryDate,
     }));
   };
 
@@ -143,6 +152,9 @@ export default function Billing() {
         amount: Number(form.amount) || 0,
         notes: form.notes,
         transactionRef: form.transactionRef,
+        // send explicit membership period if provided
+        periodStart: new Date().toISOString(),
+        periodEnd: form.expiryDate ? new Date(form.expiryDate).toISOString() : undefined,
       });
 
       // Payment done — member is now active.
@@ -485,6 +497,17 @@ export default function Billing() {
                 <option value="card">Card</option>
                 <option value="online">Online</option>
               </select>
+            </div>
+            <div className="form-group">
+              <label>Membership Expiry Date</label>
+              <input
+                className="form-input"
+                type="date"
+                value={form.expiryDate}
+                onChange={(e) => setForm((f) => ({ ...f, expiryDate: e.target.value }))}
+                min={new Date().toISOString().slice(0, 10)}
+                placeholder="Select expiry date"
+              />
             </div>
             <div className="form-group">
               <label>Transaction Reference</label>
